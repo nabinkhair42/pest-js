@@ -11,6 +11,7 @@ export interface ProjectConfig {
   database: DatabaseORM;
   dbProvider: DatabaseProvider;
   docker: boolean;
+  swagger: boolean;
   git: boolean;
   install: boolean;
   packageManager: PackageManager;

@@ -18,14 +18,14 @@ export function generateTypeormDatabase(ctx: GeneratorContext): void {
       "src/db/data-source.ts",
       `import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { User } from "./entities/user.js";
+import { Task } from "./entities/task.js";
 
 export const AppDataSource = new DataSource({
   type: "${dbType}",
   database: process.env.DATABASE_URL || "./dev.db",
   synchronize: process.env.NODE_ENV !== "production",
   logging: process.env.NODE_ENV !== "production",
-  entities: [User],
+  entities: [Task],
   migrations: ["src/db/migrations/*.ts"],
 });
 `
@@ -36,14 +36,14 @@ export const AppDataSource = new DataSource({
       "src/db/data-source.ts",
       `import "reflect-metadata";
 import { DataSource } from "typeorm";
-import { User } from "./entities/user.js";
+import { Task } from "./entities/task.js";
 
 export const AppDataSource = new DataSource({
   type: "${dbType}",
   url: process.env.DATABASE_URL,
   synchronize: process.env.NODE_ENV !== "production",
   logging: process.env.NODE_ENV !== "production",
-  entities: [User],
+  entities: [Task],
   migrations: ["src/db/migrations/*.ts"],
 });
 `
@@ -68,26 +68,29 @@ export { AppDataSource };
 `
   );
 
-  // src/db/entities/user.ts - example entity
+  // src/db/entities/task.ts
   // Explicit column types are required because tsx (esbuild) does not
   // support emitDecoratorMetadata, so TypeORM cannot infer types.
   // SQLite uses "datetime" instead of "timestamp".
   const dateType = config.dbProvider === "sqlite" ? "datetime" : "timestamp";
   writeFile(
     projectDir,
-    "src/db/entities/user.ts",
+    "src/db/entities/task.ts",
     `import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from "typeorm";
 
 @Entity()
-export class User {
+export class Task {
   @PrimaryGeneratedColumn("increment")
   id!: number;
 
   @Column("varchar")
-  name!: string;
+  title!: string;
 
-  @Column("varchar", { unique: true })
-  email!: string;
+  @Column("text", { default: "" })
+  description!: string;
+
+  @Column("boolean", { default: false })
+  completed!: boolean;
 
   @CreateDateColumn({ type: "${dateType}" })
   createdAt!: Date;

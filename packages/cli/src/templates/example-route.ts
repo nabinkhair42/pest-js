@@ -19,53 +19,68 @@ import { z } from "zod";
 import { validate } from "../middleware/validate.js";
 import { NotFoundError } from "../lib/errors.js";
 
-export const exampleRouter = Router();
+export const taskRouter = Router();
 
-interface Example {
+interface Task {
   id: number;
-  name: string;
+  title: string;
   description: string;
+  completed: boolean;
+  createdAt: string;
 }
 
 let nextId = 1;
-const examples: Example[] = [];
+const tasks: Task[] = [];
 
 const createSchema = z.object({
   body: z.object({
-    name: z.string().min(1),
-    description: z.string().min(1),
+    title: z.string().min(1).max(255),
+    description: z.string().max(1000).default(""),
   }),
 });
 
 const updateSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
-    name: z.string().min(1).optional(),
-    description: z.string().min(1).optional(),
+    title: z.string().min(1).max(255).optional(),
+    description: z.string().max(1000).optional(),
+    completed: z.boolean().optional(),
   }),
 });
 
-exampleRouter.get("/", (_req, res) => {
-  res.json(examples);
+taskRouter.get("/", (_req, res) => {
+  res.json(tasks);
 });
 
-exampleRouter.post("/", validate(createSchema), (req, res) => {
-  const example: Example = { id: nextId++, ...req.body };
-  examples.push(example);
-  res.status(201).json(example);
+taskRouter.get("/:id", (req, res) => {
+  const task = tasks.find((t) => t.id === Number(req.params.id));
+  if (!task) throw new NotFoundError("Task not found");
+  res.json(task);
 });
 
-exampleRouter.put("/:id", validate(updateSchema), (req, res) => {
-  const idx = examples.findIndex((e) => e.id === Number(req.params.id));
-  if (idx === -1) throw new NotFoundError("Example not found");
-  examples[idx] = { ...examples[idx], ...req.body };
-  res.json(examples[idx]);
+taskRouter.post("/", validate(createSchema), (req, res) => {
+  const task: Task = {
+    id: nextId++,
+    title: req.body.title,
+    description: req.body.description,
+    completed: false,
+    createdAt: new Date().toISOString(),
+  };
+  tasks.push(task);
+  res.status(201).json(task);
 });
 
-exampleRouter.delete("/:id", (req, res) => {
-  const idx = examples.findIndex((e) => e.id === Number(req.params.id));
-  if (idx === -1) throw new NotFoundError("Example not found");
-  examples.splice(idx, 1);
+taskRouter.put("/:id", validate(updateSchema), (req, res) => {
+  const idx = tasks.findIndex((t) => t.id === Number(req.params.id));
+  if (idx === -1) throw new NotFoundError("Task not found");
+  tasks[idx] = { ...tasks[idx], ...req.body };
+  res.json(tasks[idx]);
+});
+
+taskRouter.delete("/:id", (req, res) => {
+  const idx = tasks.findIndex((t) => t.id === Number(req.params.id));
+  if (idx === -1) throw new NotFoundError("Task not found");
+  tasks.splice(idx, 1);
   res.status(204).end();
 });
 `;
@@ -78,44 +93,51 @@ import { validate } from "../middleware/validate.js";
 import { NotFoundError } from "../lib/errors.js";
 import { prisma } from "../lib/prisma.js";
 
-export const exampleRouter = Router();
+export const taskRouter = Router();
 
 const createSchema = z.object({
   body: z.object({
-    name: z.string().min(1),
-    email: z.string().email(),
+    title: z.string().min(1).max(255),
+    description: z.string().max(1000).default(""),
   }),
 });
 
 const updateSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
-    name: z.string().min(1).optional(),
-    email: z.string().email().optional(),
+    title: z.string().min(1).max(255).optional(),
+    description: z.string().max(1000).optional(),
+    completed: z.boolean().optional(),
   }),
 });
 
-exampleRouter.get("/", async (_req, res) => {
-  const users = await prisma.user.findMany();
-  res.json(users);
+taskRouter.get("/", async (_req, res) => {
+  const tasks = await prisma.task.findMany({ orderBy: { createdAt: "desc" } });
+  res.json(tasks);
 });
 
-exampleRouter.post("/", validate(createSchema), async (req, res) => {
-  const user = await prisma.user.create({ data: req.body });
-  res.status(201).json(user);
+taskRouter.get("/:id", async (req, res) => {
+  const task = await prisma.task.findUnique({ where: { id: Number(req.params.id) } });
+  if (!task) throw new NotFoundError("Task not found");
+  res.json(task);
 });
 
-exampleRouter.put("/:id", validate(updateSchema), async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: Number(req.params.id) } });
-  if (!user) throw new NotFoundError("User not found");
-  const updated = await prisma.user.update({ where: { id: user.id }, data: req.body });
+taskRouter.post("/", validate(createSchema), async (req, res) => {
+  const task = await prisma.task.create({ data: req.body });
+  res.status(201).json(task);
+});
+
+taskRouter.put("/:id", validate(updateSchema), async (req, res) => {
+  const task = await prisma.task.findUnique({ where: { id: Number(req.params.id) } });
+  if (!task) throw new NotFoundError("Task not found");
+  const updated = await prisma.task.update({ where: { id: task.id }, data: req.body });
   res.json(updated);
 });
 
-exampleRouter.delete("/:id", async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: Number(req.params.id) } });
-  if (!user) throw new NotFoundError("User not found");
-  await prisma.user.delete({ where: { id: user.id } });
+taskRouter.delete("/:id", async (req, res) => {
+  const task = await prisma.task.findUnique({ where: { id: Number(req.params.id) } });
+  if (!task) throw new NotFoundError("Task not found");
+  await prisma.task.delete({ where: { id: task.id } });
   res.status(204).end();
 });
 `;
@@ -135,46 +157,53 @@ import { eq } from "drizzle-orm";
 import { validate } from "../middleware/validate.js";
 import { NotFoundError } from "../lib/errors.js";
 import { db } from "../db/index.js";
-import { users } from "../db/schema.js";
+import { tasks } from "../db/schema.js";
 
-export const exampleRouter = Router();
+export const taskRouter = Router();
 
 const createSchema = z.object({
   body: z.object({
-    name: z.string().min(1),
-    email: z.string().email(),
+    title: z.string().min(1).max(255),
+    description: z.string().max(1000).default(""),
   }),
 });
 
 const updateSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
-    name: z.string().min(1).optional(),
-    email: z.string().email().optional(),
+    title: z.string().min(1).max(255).optional(),
+    description: z.string().max(1000).optional(),
+    completed: z.boolean().optional(),
   }),
 });
 
-exampleRouter.get("/", async (_req, res) => {
-  const result = await db.select().from(users);
+taskRouter.get("/", async (_req, res) => {
+  const result = await db.select().from(tasks);
   res.json(result);
 });
 
-exampleRouter.post("/", validate(createSchema), async (req, res) => {
-  const [user] = await db.insert(users).values(req.body).returning();
-  res.status(201).json(user);
+taskRouter.get("/:id", async (req, res) => {
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, Number(req.params.id)));
+  if (!task) throw new NotFoundError("Task not found");
+  res.json(task);
 });
 
-exampleRouter.put("/:id", validate(updateSchema), async (req, res) => {
-  const [existing] = await db.select().from(users).where(eq(users.id, Number(req.params.id)));
-  if (!existing) throw new NotFoundError("User not found");
-  const [updated] = await db.update(users).set(req.body).where(eq(users.id, existing.id)).returning();
+taskRouter.post("/", validate(createSchema), async (req, res) => {
+  const [task] = await db.insert(tasks).values(req.body).returning();
+  res.status(201).json(task);
+});
+
+taskRouter.put("/:id", validate(updateSchema), async (req, res) => {
+  const [existing] = await db.select().from(tasks).where(eq(tasks.id, Number(req.params.id)));
+  if (!existing) throw new NotFoundError("Task not found");
+  const [updated] = await db.update(tasks).set(req.body).where(eq(tasks.id, existing.id)).returning();
   res.json(updated);
 });
 
-exampleRouter.delete("/:id", async (req, res) => {
-  const [existing] = await db.select().from(users).where(eq(users.id, Number(req.params.id)));
-  if (!existing) throw new NotFoundError("User not found");
-  await db.delete(users).where(eq(users.id, existing.id));
+taskRouter.delete("/:id", async (req, res) => {
+  const [existing] = await db.select().from(tasks).where(eq(tasks.id, Number(req.params.id)));
+  if (!existing) throw new NotFoundError("Task not found");
+  await db.delete(tasks).where(eq(tasks.id, existing.id));
   res.status(204).end();
 });
 `;
@@ -187,48 +216,55 @@ import { eq } from "drizzle-orm";
 import { validate } from "../middleware/validate.js";
 import { NotFoundError } from "../lib/errors.js";
 import { db } from "../db/index.js";
-import { users } from "../db/schema.js";
+import { tasks } from "../db/schema.js";
 
-export const exampleRouter = Router();
+export const taskRouter = Router();
 
 const createSchema = z.object({
   body: z.object({
-    name: z.string().min(1),
-    email: z.string().email(),
+    title: z.string().min(1).max(255),
+    description: z.string().max(1000).default(""),
   }),
 });
 
 const updateSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
-    name: z.string().min(1).optional(),
-    email: z.string().email().optional(),
+    title: z.string().min(1).max(255).optional(),
+    description: z.string().max(1000).optional(),
+    completed: z.boolean().optional(),
   }),
 });
 
-exampleRouter.get("/", async (_req, res) => {
-  const result = await db.select().from(users);
+taskRouter.get("/", async (_req, res) => {
+  const result = await db.select().from(tasks);
   res.json(result);
 });
 
-exampleRouter.post("/", validate(createSchema), async (req, res) => {
-  const result = await db.insert(users).values(req.body).$returningId();
-  const [user] = await db.select().from(users).where(eq(users.id, result[0].id));
-  res.status(201).json(user);
+taskRouter.get("/:id", async (req, res) => {
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, Number(req.params.id)));
+  if (!task) throw new NotFoundError("Task not found");
+  res.json(task);
 });
 
-exampleRouter.put("/:id", validate(updateSchema), async (req, res) => {
-  const [existing] = await db.select().from(users).where(eq(users.id, Number(req.params.id)));
-  if (!existing) throw new NotFoundError("User not found");
-  await db.update(users).set(req.body).where(eq(users.id, existing.id));
-  const [updated] = await db.select().from(users).where(eq(users.id, existing.id));
+taskRouter.post("/", validate(createSchema), async (req, res) => {
+  const result = await db.insert(tasks).values(req.body).$returningId();
+  const [task] = await db.select().from(tasks).where(eq(tasks.id, result[0].id));
+  res.status(201).json(task);
+});
+
+taskRouter.put("/:id", validate(updateSchema), async (req, res) => {
+  const [existing] = await db.select().from(tasks).where(eq(tasks.id, Number(req.params.id)));
+  if (!existing) throw new NotFoundError("Task not found");
+  await db.update(tasks).set(req.body).where(eq(tasks.id, existing.id));
+  const [updated] = await db.select().from(tasks).where(eq(tasks.id, existing.id));
   res.json(updated);
 });
 
-exampleRouter.delete("/:id", async (req, res) => {
-  const [existing] = await db.select().from(users).where(eq(users.id, Number(req.params.id)));
-  if (!existing) throw new NotFoundError("User not found");
-  await db.delete(users).where(eq(users.id, existing.id));
+taskRouter.delete("/:id", async (req, res) => {
+  const [existing] = await db.select().from(tasks).where(eq(tasks.id, Number(req.params.id)));
+  if (!existing) throw new NotFoundError("Task not found");
+  await db.delete(tasks).where(eq(tasks.id, existing.id));
   res.status(204).end();
 });
 `;
@@ -240,52 +276,60 @@ import { z } from "zod";
 import { validate } from "../middleware/validate.js";
 import { NotFoundError } from "../lib/errors.js";
 import { AppDataSource } from "../db/data-source.js";
-import { User } from "../db/entities/user.js";
+import { Task } from "../db/entities/task.js";
 
-export const exampleRouter = Router();
+export const taskRouter = Router();
 
 const createSchema = z.object({
   body: z.object({
-    name: z.string().min(1),
-    email: z.string().email(),
+    title: z.string().min(1).max(255),
+    description: z.string().max(1000).default(""),
   }),
 });
 
 const updateSchema = z.object({
   params: z.object({ id: z.string() }),
   body: z.object({
-    name: z.string().min(1).optional(),
-    email: z.string().email().optional(),
+    title: z.string().min(1).max(255).optional(),
+    description: z.string().max(1000).optional(),
+    completed: z.boolean().optional(),
   }),
 });
 
-exampleRouter.get("/", async (_req, res) => {
-  const userRepo = AppDataSource.getRepository(User);
-  const users = await userRepo.find();
-  res.json(users);
+taskRouter.get("/", async (_req, res) => {
+  const taskRepo = AppDataSource.getRepository(Task);
+  const tasks = await taskRepo.find({ order: { createdAt: "DESC" } });
+  res.json(tasks);
 });
 
-exampleRouter.post("/", validate(createSchema), async (req, res) => {
-  const userRepo = AppDataSource.getRepository(User);
-  const user = userRepo.create(req.body);
-  const saved = await userRepo.save(user);
+taskRouter.get("/:id", async (req, res) => {
+  const taskRepo = AppDataSource.getRepository(Task);
+  const task = await taskRepo.findOneBy({ id: Number(req.params.id) });
+  if (!task) throw new NotFoundError("Task not found");
+  res.json(task);
+});
+
+taskRouter.post("/", validate(createSchema), async (req, res) => {
+  const taskRepo = AppDataSource.getRepository(Task);
+  const task = taskRepo.create(req.body);
+  const saved = await taskRepo.save(task);
   res.status(201).json(saved);
 });
 
-exampleRouter.put("/:id", validate(updateSchema), async (req, res) => {
-  const userRepo = AppDataSource.getRepository(User);
-  const user = await userRepo.findOneBy({ id: Number(req.params.id) });
-  if (!user) throw new NotFoundError("User not found");
-  userRepo.merge(user, req.body);
-  const updated = await userRepo.save(user);
+taskRouter.put("/:id", validate(updateSchema), async (req, res) => {
+  const taskRepo = AppDataSource.getRepository(Task);
+  const task = await taskRepo.findOneBy({ id: Number(req.params.id) });
+  if (!task) throw new NotFoundError("Task not found");
+  taskRepo.merge(task, req.body);
+  const updated = await taskRepo.save(task);
   res.json(updated);
 });
 
-exampleRouter.delete("/:id", async (req, res) => {
-  const userRepo = AppDataSource.getRepository(User);
-  const user = await userRepo.findOneBy({ id: Number(req.params.id) });
-  if (!user) throw new NotFoundError("User not found");
-  await userRepo.remove(user);
+taskRouter.delete("/:id", async (req, res) => {
+  const taskRepo = AppDataSource.getRepository(Task);
+  const task = await taskRepo.findOneBy({ id: Number(req.params.id) });
+  if (!task) throw new NotFoundError("Task not found");
+  await taskRepo.remove(task);
   res.status(204).end();
 });
 `;

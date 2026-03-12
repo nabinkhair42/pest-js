@@ -22,6 +22,14 @@ export function generatePrismaDatabase(ctx: GeneratorContext): void {
 datasource db {
   provider = "${provider}"
 }
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String   @default("")
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
 `
   );
 

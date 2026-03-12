@@ -27,6 +27,14 @@ describe("parseArgs", () => {
     expect(parseArgs(["--no-docker"]).docker).toBe(false);
   });
 
+  it("should parse --swagger", () => {
+    expect(parseArgs(["--swagger"]).swagger).toBe(true);
+  });
+
+  it("should parse --no-swagger", () => {
+    expect(parseArgs(["--no-swagger"]).swagger).toBe(false);
+  });
+
   it("should parse --package-manager", () => {
     expect(parseArgs(["--package-manager", "pnpm"]).packageManager).toBe("pnpm");
     expect(parseArgs(["--package-manager", "yarn"]).packageManager).toBe("yarn");

@@ -1,6 +1,6 @@
 {
   "name": "pest-js-app",
-  "version": "3.3.2",
+  "version": "3.4.0",
   "description": "Progressive Express Starter Template - CLI Framework",
   "type": "module",
   "bin": {

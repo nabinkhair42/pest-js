@@ -13,6 +13,7 @@ function makeConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
     database: "none",
     dbProvider: "postgresql",
     docker: false,
+    swagger: false,
     git: false,
     install: false,
     packageManager: "npm",
@@ -146,5 +147,18 @@ describe("getDependencies", () => {
     expect(deps).toContain("typeorm");
     expect(deps).toContain("reflect-metadata");
     expect(deps).toContain("mysql2");
+  });
+
+  it("should add swagger deps when enabled", () => {
+    const { deps, devDeps } = getDependencies(makeConfig({ swagger: true }));
+    expect(deps).toContain("swagger-ui-express");
+    expect(deps).toContain("@asteasolutions/zod-to-openapi");
+    expect(devDeps).toContain("@types/swagger-ui-express");
+  });
+
+  it("should not add swagger deps when disabled", () => {
+    const { deps, devDeps } = getDependencies(makeConfig({ swagger: false }));
+    expect(deps).not.toContain("swagger-ui-express");
+    expect(devDeps).not.toContain("@types/swagger-ui-express");
   });
 });

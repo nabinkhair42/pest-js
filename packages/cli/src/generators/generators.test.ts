@@ -13,6 +13,7 @@ function makeConfig(overrides: Partial<ProjectConfig> = {}): ProjectConfig {
     database: "none",
     dbProvider: "postgresql",
     docker: false,
+    swagger: false,
     git: false,
     install: false,
     packageManager: "npm",
@@ -53,10 +54,10 @@ describe("generateProject", () => {
         ".prettierrc", "jest.config.js", ".gitignore",
         ".env", ".env.example", "vercel.json",
         "src/app.ts", "src/server.ts",
-        "src/routes/health.ts", "src/routes/example.ts",
+        "src/routes/health.ts", "src/routes/tasks.ts",
         "src/middleware/error-handler.ts", "src/middleware/validate.ts", "src/middleware/rate-limit.ts",
         "src/config/env.ts", "src/lib/errors.ts", "src/lib/logger.ts",
-        "tests/app.test.ts", "tests/example.test.ts",
+        "tests/app.test.ts", "tests/tasks.test.ts",
         ".husky/pre-commit",
       ];
       for (const file of expected) {
@@ -122,8 +123,8 @@ describe("generateProject", () => {
     it("should generate in-memory variant for no database", () => {
       generate(projectDir);
 
-      const route = readFile(projectDir, "src/routes/example.ts");
-      expect(route).toContain("exampleRouter");
+      const route = readFile(projectDir, "src/routes/tasks.ts");
+      expect(route).toContain("taskRouter");
       expect(route).toContain("NotFoundError");
       expect(route).toContain("validate");
       expect(route).not.toContain("prisma");
@@ -132,19 +133,19 @@ describe("generateProject", () => {
     it("should generate prisma variant when database is prisma", () => {
       generate(projectDir, { database: "prisma" });
 
-      const route = readFile(projectDir, "src/routes/example.ts");
+      const route = readFile(projectDir, "src/routes/tasks.ts");
       expect(route).toContain("prisma");
-      expect(route).toContain("exampleRouter");
+      expect(route).toContain("taskRouter");
     });
 
-    it("should generate example route test only for no-database config", () => {
+    it("should generate task route test only for no-database config", () => {
       generate(projectDir);
-      expect(existsSync(join(projectDir, "tests/example.test.ts"))).toBe(true);
+      expect(existsSync(join(projectDir, "tests/tasks.test.ts"))).toBe(true);
     });
 
-    it("should not generate example route test when database is configured", () => {
+    it("should not generate task route test when database is configured", () => {
       generate(projectDir, { database: "prisma" });
-      expect(existsSync(join(projectDir, "tests/example.test.ts"))).toBe(false);
+      expect(existsSync(join(projectDir, "tests/tasks.test.ts"))).toBe(false);
     });
   });
 
@@ -197,7 +198,7 @@ describe("generateProject", () => {
 
         expect(existsSync(join(projectDir, "src/db/data-source.ts"))).toBe(true);
         expect(existsSync(join(projectDir, "src/db/index.ts"))).toBe(true);
-        expect(existsSync(join(projectDir, "src/db/entities/user.ts"))).toBe(true);
+        expect(existsSync(join(projectDir, "src/db/entities/task.ts"))).toBe(true);
       });
 
       it("should enable decorator support in tsconfig", () => {
@@ -211,10 +212,10 @@ describe("generateProject", () => {
       it("should not use top-level getRepository call", () => {
         generate(projectDir, { database: "typeorm", dbProvider: "postgresql" });
 
-        const route = readFile(projectDir, "src/routes/example.ts");
-        const topLevelRepo = route.split("\n").find((l) => l.startsWith("const userRepo"));
+        const route = readFile(projectDir, "src/routes/tasks.ts");
+        const topLevelRepo = route.split("\n").find((l) => l.startsWith("const taskRepo"));
         expect(topLevelRepo).toBeUndefined();
-        expect(route).toContain("getRepository(User)");
+        expect(route).toContain("getRepository(Task)");
       });
     });
   });
@@ -371,6 +372,46 @@ describe("generateProject", () => {
         const dockerfile = readFile(projectDir, "Dockerfile");
         expect(dockerfile).toContain("npm ci");
       });
+    });
+  });
+
+  describe("swagger", () => {
+    it("should generate swagger file when enabled", () => {
+      generate(projectDir, { swagger: true });
+
+      expect(existsSync(join(projectDir, "src/lib/swagger.ts"))).toBe(true);
+    });
+
+    it("should not generate swagger file when disabled", () => {
+      generate(projectDir, { swagger: false });
+
+      expect(existsSync(join(projectDir, "src/lib/swagger.ts"))).toBe(false);
+    });
+
+    it("should wire swagger-ui into app.ts when enabled", () => {
+      generate(projectDir, { swagger: true });
+
+      const app = readFile(projectDir, "src/app.ts");
+      expect(app).toContain('swagger-ui-express');
+      expect(app).toContain("/api/docs");
+      expect(app).toContain("/api/docs.json");
+    });
+
+    it("should not include swagger imports in app.ts when disabled", () => {
+      generate(projectDir, { swagger: false });
+
+      const app = readFile(projectDir, "src/app.ts");
+      expect(app).not.toContain("swagger");
+    });
+
+    it("should use Task schema with title and completed fields", () => {
+      generate(projectDir, { swagger: true });
+
+      const swagger = readFile(projectDir, "src/lib/swagger.ts");
+      expect(swagger).toContain("TaskSchema");
+      expect(swagger).toContain("title");
+      expect(swagger).toContain("completed");
+      expect(swagger).toContain("/api/tasks");
     });
   });
 

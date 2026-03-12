@@ -25,6 +25,7 @@ interface CliArgs {
   database?: DatabaseORM;
   dbProvider?: DatabaseProvider;
   docker?: boolean;
+  swagger?: boolean;
   packageManager?: PackageManager;
 }
 
@@ -57,6 +58,10 @@ export function parseArgs(argv: string[]): CliArgs {
       args.docker = true;
     } else if (arg === "--no-docker") {
       args.docker = false;
+    } else if (arg === "--swagger") {
+      args.swagger = true;
+    } else if (arg === "--no-swagger") {
+      args.swagger = false;
     } else if (arg === "--package-manager" && argv[i + 1]) {
       const val = argv[++i];
       const valid: PackageManager[] = ["npm", "pnpm", "yarn"];
@@ -91,6 +96,8 @@ ${BANNER}
     --db-provider <db>         Database provider: postgresql | mysql | sqlite
     --docker                   Enable Docker support
     --no-docker                Disable Docker support
+    --swagger                  Enable Swagger API docs (default with --yes)
+    --no-swagger               Disable Swagger API docs
     --package-manager <pm>     Package manager: npm | pnpm | yarn
     -y, --yes                  Use defaults for all prompts (non-interactive)
     -v, --version              Show version
@@ -139,6 +146,7 @@ export async function runCli(args: CliArgs): Promise<void> {
       database: args.database || "none",
       dbProvider: args.dbProvider || "postgresql",
       docker: args.docker ?? (args.database !== undefined && args.database !== "none"),
+      swagger: args.swagger ?? true,
       git: true,
       install: true,
       packageManager: args.packageManager || "npm",
@@ -217,6 +225,10 @@ export async function runCli(args: CliArgs): Promise<void> {
     nextSteps.push("npx prisma migrate dev --name init");
   } else if (config.database === "drizzle") {
     nextSteps.push(`${pmRun} db:push`);
+  }
+
+  if (config.swagger) {
+    nextSteps.push("# API docs at http://localhost:3000/api/docs");
   }
 
   p.note(nextSteps.join("\n"), "Next steps");
@@ -306,6 +318,16 @@ async function collectInteractiveConfig(args: CliArgs): Promise<ProjectConfig> {
     process.exit(0);
   }
 
+  const swagger = await p.confirm({
+    message: "Add Swagger API docs?",
+    initialValue: true,
+  });
+
+  if (p.isCancel(swagger)) {
+    p.cancel("Operation cancelled.");
+    process.exit(0);
+  }
+
   const packageManager = await p.select({
     message: "Package manager",
     options: [
@@ -347,6 +369,7 @@ async function collectInteractiveConfig(args: CliArgs): Promise<ProjectConfig> {
     database: database as DatabaseORM,
     dbProvider,
     docker: docker as boolean,
+    swagger: swagger as boolean,
     git: git as boolean,
     install: install as boolean,
     packageManager: packageManager as PackageManager,

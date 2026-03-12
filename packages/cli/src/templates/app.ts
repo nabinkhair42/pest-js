@@ -13,12 +13,17 @@ export function appTemplate(config: ProjectConfig): string {
   lines.push('import helmet from "helmet";');
   lines.push('import pinoHttp from "pino-http";');
   lines.push('import { healthRouter } from "./routes/health.js";');
-  lines.push('import { exampleRouter } from "./routes/example.js";');
+  lines.push('import { taskRouter } from "./routes/tasks.js";');
   lines.push('import { errorHandler } from "./middleware/error-handler.js";');
   lines.push('import { globalLimiter } from "./middleware/rate-limit.js";');
   lines.push('import { NotFoundError } from "./lib/errors.js";');
   lines.push('import { logger } from "./lib/logger.js";');
   lines.push('import { env } from "./config/env.js";');
+
+  if (config.swagger) {
+    lines.push('import swaggerUi from "swagger-ui-express";');
+    lines.push('import { swaggerSpec, swaggerUiOptions } from "./lib/swagger.js";');
+  }
   lines.push("");
   lines.push("const app = express();");
   lines.push("");
@@ -39,7 +44,17 @@ export function appTemplate(config: ProjectConfig): string {
   lines.push("});");
   lines.push("");
   lines.push('app.use("/health", healthRouter);');
-  lines.push('app.use("/api/examples", exampleRouter);');
+  lines.push('app.use("/api/tasks", taskRouter);');
+
+  if (config.swagger) {
+    lines.push("");
+    lines.push("// API Documentation");
+    lines.push('app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, swaggerUiOptions));');
+    lines.push('app.get("/api/docs.json", (_req, res) => {');
+    lines.push("  res.json(swaggerSpec);");
+    lines.push("});");
+  }
+
   lines.push("");
   lines.push("// 404 handler");
   lines.push('app.all("*path", (_req, _res) => {');

@@ -1,4 +1,4 @@
-export const VERSION = "3.3.2";
+export const VERSION = "3.4.0";
 
 export const DEPS = [
   "express",
@@ -60,6 +60,11 @@ export const DB_DEPS = {
       sqlite: { dependencies: ["better-sqlite3"] },
     },
   },
+};
+
+export const SWAGGER_DEPS = {
+  dependencies: ["swagger-ui-express", "@asteasolutions/zod-to-openapi"],
+  devDependencies: ["@types/swagger-ui-express"],
 };
 
 export const DATABASE_URLS: Record<string, Record<string, string>> = {

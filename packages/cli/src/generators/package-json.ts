@@ -1,5 +1,5 @@
 import type { GeneratorContext, ProjectConfig } from "../types.js";
-import { DEPS, DEV_DEPS, DB_DEPS } from "../constants.js";
+import { DEPS, DEV_DEPS, DB_DEPS, SWAGGER_DEPS } from "../constants.js";
 import { writeJson } from "../utils/fs.js";
 
 export function getDependencies(config: ProjectConfig): {
@@ -32,6 +32,11 @@ export function getDependencies(config: ProjectConfig): {
         config.dbProvider as keyof typeof DB_DEPS.typeorm.drivers
       ];
     deps.push(...driver.dependencies);
+  }
+
+  if (config.swagger) {
+    deps.push(...SWAGGER_DEPS.dependencies);
+    devDeps.push(...SWAGGER_DEPS.devDependencies);
   }
 
   return { deps, devDeps };

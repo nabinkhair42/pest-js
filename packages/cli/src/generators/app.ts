@@ -12,6 +12,7 @@ import { validateTemplate } from "../templates/validate.js";
 import { exampleRouteTemplate } from "../templates/example-route.js";
 import { exampleRouteTestTemplate } from "../templates/example-route-test.js";
 import { rateLimitTemplate } from "../templates/rate-limit.js";
+import { swaggerTemplate } from "../templates/swagger.js";
 
 export function generateApp(ctx: GeneratorContext): void {
   const { config, projectDir } = ctx;
@@ -19,7 +20,7 @@ export function generateApp(ctx: GeneratorContext): void {
   writeFile(projectDir, "src/app.ts", appTemplate(config));
   writeFile(projectDir, "src/server.ts", serverTemplate(config));
   writeFile(projectDir, "src/routes/health.ts", healthRouteTemplate());
-  writeFile(projectDir, "src/routes/example.ts", exampleRouteTemplate(config));
+  writeFile(projectDir, "src/routes/tasks.ts", exampleRouteTemplate(config));
   writeFile(projectDir, "src/middleware/error-handler.ts", errorHandlerTemplate());
   writeFile(projectDir, "src/middleware/validate.ts", validateTemplate());
   writeFile(projectDir, "src/middleware/rate-limit.ts", rateLimitTemplate());
@@ -28,8 +29,12 @@ export function generateApp(ctx: GeneratorContext): void {
   writeFile(projectDir, "src/lib/logger.ts", loggerTemplate());
   writeFile(projectDir, "tests/app.test.ts", appTestTemplate());
 
+  if (config.swagger) {
+    writeFile(projectDir, "src/lib/swagger.ts", swaggerTemplate(config));
+  }
+
   // Only generate example route test for in-memory variant (no DB)
   if (config.database === "none") {
-    writeFile(projectDir, "tests/example.test.ts", exampleRouteTestTemplate());
+    writeFile(projectDir, "tests/tasks.test.ts", exampleRouteTestTemplate());
   }
 }

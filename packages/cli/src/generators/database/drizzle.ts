@@ -101,12 +101,13 @@ export const db = drizzle(sqlite, { schema });
     writeFile(
       projectDir,
       "src/db/schema.ts",
-      `import { pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+      `import { pgTable, serial, text, boolean, timestamp } from "drizzle-orm/pg-core";
 
-export const users = pgTable("users", {
+export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 `
@@ -115,12 +116,13 @@ export const users = pgTable("users", {
     writeFile(
       projectDir,
       "src/db/schema.ts",
-      `import { mysqlTable, serial, text, timestamp } from "drizzle-orm/mysql-core";
+      `import { mysqlTable, serial, text, boolean, timestamp } from "drizzle-orm/mysql-core";
 
-export const users = mysqlTable("users", {
+export const tasks = mysqlTable("tasks", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  completed: boolean("completed").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 `
@@ -131,10 +133,11 @@ export const users = mysqlTable("users", {
       "src/db/schema.ts",
       `import { sqliteTable, integer, text } from "drizzle-orm/sqlite-core";
 
-export const users = sqliteTable("users", {
+export const tasks = sqliteTable("tasks", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull(),
-  email: text("email").notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  completed: integer("completed", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 `

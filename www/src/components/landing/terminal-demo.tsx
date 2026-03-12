@@ -9,6 +9,7 @@ const PROMPT_LINES = [
   { label: "Author", value: "developer" },
   { label: "Database ORM", value: "Prisma" },
   { label: "Database provider", value: "PostgreSQL" },
+  { label: "Add Swagger API docs?", value: "Yes" },
   { label: "Add Docker support?", value: "Yes" },
   { label: "Package manager", value: "pnpm" },
   { label: "Initialize git repository?", value: "Yes" },
@@ -25,10 +26,11 @@ const NEXT_STEPS = [
   "cd my-api",
   "pnpm dev",
   "npx prisma migrate dev --name init",
+  "Open http://localhost:3000/api/docs",
 ];
 
-// Total animated elements: command(1) + banner(1) + prompts(9) + results(3) + next-steps(1) + happy(1) = 16
-const TOTAL_STEPS = 16;
+// Total animated elements: command(1) + banner(1) + prompts(10) + results(3) + next-steps(1) + happy(1) = 17
+const TOTAL_STEPS = 17;
 const STEP_DELAY = 80; // ms between each line appearing
 
 export function TerminalDemo() {
@@ -65,10 +67,10 @@ export function TerminalDemo() {
 
   // Step indices:
   // 0: nothing, 1: command, 2: banner
-  // 3–11: prompt lines (9 items)
-  // 12–14: result lines (3 items)
-  // 15: next steps block
-  // 16: happy coding
+  // 3–12: prompt lines (10 items)
+  // 13–15: result lines (3 items)
+  // 16: next steps block
+  // 17: happy coding
 
   const show = (step: number) =>
     visibleStep >= step
@@ -108,7 +110,7 @@ export function TerminalDemo() {
 |_|   |_____|____/ |_|(_)/ |___/
                         |__/`}</pre>
           <div className="mt-1 text-white/40">
-            {"  v3.3.2 - Progressive Express Starter Template"}
+            {"  v3.4.0 - Progressive Express Starter Template"}
           </div>
         </div>
 
@@ -131,7 +133,7 @@ export function TerminalDemo() {
 
         {/* Spinner results */}
         {RESULT_LINES.map((label, i) => (
-          <div key={label} className={`${show(12 + i)} ${transition}`}>
+          <div key={label} className={`${show(13 + i)} ${transition}`}>
             <Line symbol="check" color="green" label={label} />
             {i < RESULT_LINES.length - 1 && <Line symbol="bar" />}
           </div>
@@ -140,7 +142,7 @@ export function TerminalDemo() {
         <div className="mt-3" />
 
         {/* Next steps */}
-        <div className={`${show(15)} ${transition}`}>
+        <div className={`${show(16)} ${transition}`}>
           <div className="text-white/40">
             {"  "}
             <span className="text-white/60">Next steps</span>
@@ -155,7 +157,7 @@ export function TerminalDemo() {
         <div className="mt-3" />
 
         {/* Happy coding */}
-        <div className={`${show(16)} ${transition}`}>
+        <div className={`${show(17)} ${transition}`}>
           <span className="text-white/40">{"  "}</span>
           <span className="text-cyan-400">{"◇"}</span>{" "}
           <span className="text-white/70">Happy coding!</span>
