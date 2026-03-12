@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import { createRelativeLink } from "fumadocs-ui/mdx";
 import { LLMCopyButton, ViewOptions } from "@/components/ai/page-actions";
 import { AnchorProvider } from "fumadocs-core/toc";
-import { findNeighbour, findPath } from "fumadocs-core/page-tree";
+import { findNeighbour, } from "fumadocs-core/page-tree";
 // import { TOC } from "@/components/layout/toc";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";

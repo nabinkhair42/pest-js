@@ -3,7 +3,7 @@ import { Expressjs } from "@/components/icons/express";
 import { Pino } from "@/components/icons/pino";
 import { TypeScript } from "@/components/icons/typescript";
 import { Zod } from "@/components/icons/zod";
-import { type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Database } from "lucide-react";
 
 const features: { icon: ReactNode; title: string; description: string }[] = [

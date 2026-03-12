@@ -1,11 +1,8 @@
 import { Docker } from "@/components/icons/docker";
-import { GitHub } from "@/components/icons/github";
 import { Prisma } from "@/components/icons/prisma";
 import { TypeScript } from "@/components/icons/typescript";
 import { AuroraBackground } from "@/components/landing/aurora-bg";
 import { CopyCommand } from "@/components/landing/copy-command";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 type CodePart =
