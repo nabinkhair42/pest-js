@@ -34,8 +34,12 @@ export function dockerComposeTemplate(config: ProjectConfig): string {
   }
 
   if (isSqlite) {
+    const sqliteUrl =
+      config.database === "prisma"
+        ? "file:/app/data/dev.db"
+        : "/app/data/dev.db";
     lines.push(`    environment:`);
-    lines.push(`      DATABASE_URL: "/app/data/dev.db"`);
+    lines.push(`      DATABASE_URL: "${sqliteUrl}"`);
     lines.push(`    volumes:`);
     lines.push(`      - ./data:/app/data`);
   }
